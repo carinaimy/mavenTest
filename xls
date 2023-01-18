@@ -1,0 +1,98 @@
+package piDmlGenerator;
+
+import org.apache.poi.ss.usermodel.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.FileInputStream;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.lang.String;
+
+public class main {
+
+	public static void main(String[] args) throws IOException {
+		 HashMap<Integer, String[]> contentMap = new HashMap<Integer, String[]>();
+		 ArrayList<Integer> noChargeList = new ArrayList<Integer>();
+		 ArrayList<Integer> updateList = new ArrayList<Integer>();
+		 boolean errorFlag = true;
+		
+		// TODO Auto-generated method stub
+		try {
+			 FileInputStream fis= new FileInputStream(new File("src//test.xls"));  
+			 HSSFWorkbook workbook = new HSSFWorkbook(fis);  //2003 excel uses HSSFWorkbook 
+			 for(int sheetIdx = 0; sheetIdx < workbook.getNumberOfSheets(); sheetIdx++) {
+				 Sheet currSheet = workbook.getSheetAt(sheetIdx);
+				 int colAmount = currSheet.getRow(0).getLastCellNum();
+				 int rowAmount = currSheet.getLastRowNum();
+				 System.out.println("Sheet Idx: " + sheetIdx+" with " + colAmount + " columns and " + rowAmount + " rows.");
+				 
+				//---------------------------------------------------------------//
+				 //get index for corresponding column: id, feeAmount, subUserAmount, operator
+				 Row headerRow = currSheet.getRow(0);
+				 int idIdx = -1, feeAmountIdx = -1, subuserAmountIdx=-1, operatorIdx = -1;
+				 
+				 for(int i = 0; i<colAmount; i++) {
+					 String currColContent = headerRow.getCell(i).toString().toLowerCase().trim();
+					 //System.out.println("CURR COL: " + currColContent);
+					 if(currColContent.equals("id_")||currColContent.equals("id")) {
+						 idIdx = i;
+					 }
+					 else if(currColContent.equals("feeamount_")||currColContent.equals("feeamount")) {	 
+						 feeAmountIdx = i;
+					 }
+					 else if(currColContent.equals("subusearmount_")||currColContent.equals("subusearmount")) {
+						 subuserAmountIdx = i;
+					 }
+					 else if(currColContent.equals("operator_")||currColContent.equals("operator")) {
+						 operatorIdx = i;
+					 }
+				 }
+				 //---------------------------------------------------------------//
+				 
+				 //get each row and save it to corresponding List
+				 for(int rowIdx = 1; rowIdx <= rowAmount ;rowIdx++) {
+					 Row row = currSheet.getRow(rowIdx);
+					 String[] currRowStr = new String[colAmount];
+					 for(int colIdx = 0; colIdx < colAmount; colIdx++) {
+						Cell cell = row.getCell(colIdx);
+						if(cell == null || cell.toString().equals("")) {
+							currRowStr[colIdx] = "NULL"; 
+						}
+						else { 
+							currRowStr[colIdx] = cell.toString().trim();
+						}		
+					 }
+					 
+					 if(!currRowStr[idIdx].equals("NULL") 
+						&& !currRowStr[feeAmountIdx].equals("NULL") 
+						&& !currRowStr[subuserAmountIdx].equals("NULL") 
+						&& !currRowStr[operatorIdx].equals("NULL") ) {
+						 
+						 currRowStr[idIdx] = String.valueOf((int)Double.parseDouble(currRowStr[idIdx]));
+						 currRowStr[subuserAmountIdx] = String.valueOf((int)Double.parseDouble(currRowStr[subuserAmountIdx]));  
+						 currRowStr[feeAmountIdx] = String.valueOf((int)Double.parseDouble(currRowStr[feeAmountIdx]));  
+						 
+						 contentMap.put(Integer.valueOf(currRowStr[idIdx]), currRowStr);
+						 System.out.println(Arrays.toString(currRowStr));
+						 
+						 if(currRowStr[operatorIdx].equals("UPDATE")){
+							 updateList.add(Integer.valueOf(currRowStr[idIdx]));
+						 }
+						 else if(currRowStr[operatorIdx].equals("NOCHARGE")) {
+							 noChargeList.add(Integer.valueOf(currRowStr[idIdx]));
+						 }					 
+					 }
+				 }
+			 }
+			 errorFlag = false;
+			 workbook.close();
+		}
+		catch(Exception e) {  
+			//some error message here
+		}
+	}
+
+}
